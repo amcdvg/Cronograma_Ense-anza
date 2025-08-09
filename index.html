@@ -333,24 +333,65 @@
             return text.replace(/^\d+\s*/, "");
         }
 
-        // Función para determinar el trimestre
-        function getTrimestre(dateString) {
-            if (!dateString) return 0;
-            const date = new Date(dateString);
-            const month = date.getMonth() + 1; // Enero es 0
+        // Función para determinar el trimestre (versión mejorada)
+        function getTrimestre(semana) {
+            // Primero verificar si hay fecha de culto (sábado) y está entre el 1-7 de enero
+            if (semana.fechaCulto) {
+                const fechaCulto = new Date(semana.fechaCulto.includes('T') ? semana.fechaCulto : semana.fechaCulto + 'T00:00:00');
+                const mesCulto = fechaCulto.getMonth() + 1;
+                const diaCulto = fechaCulto.getDate();
+                
+                if (mesCulto === 1 && diaCulto <= 7) {
+                    return 1;
+                }
+            }
+
+            // Contar cuántas fechas caen en cada trimestre
+            const trimestreCount = {1: 0, 2: 0, 3: 0, 4: 0};
             
-            if (month >= 1 && month <= 3) return 1;
-            if (month >= 4 && month <= 6) return 2;
-            if (month >= 7 && month <= 9) return 3;
-            return 4;
+            // Función auxiliar para contar trimestres
+            function contarTrimestre(dateString) {
+                if (!dateString) return;
+                const date = new Date(dateString.includes('T') ? dateString : dateString + 'T00:00:00');
+                const month = date.getMonth() + 1;
+                
+                if (month >= 1 && month <= 3) trimestreCount[1]++;
+                else if (month >= 4 && month <= 6) trimestreCount[2]++;
+                else if (month >= 7 && month <= 9) trimestreCount[3]++;
+                else trimestreCount[4]++;
+            }
+
+            // Contar trimestres para cada fecha
+            contarTrimestre(semana.fechaDomingo);
+            contarTrimestre(semana.fechaMiercoles);
+            contarTrimestre(semana.fechaCulto);
+
+            // Determinar el trimestre con más fechas
+            let maxCount = 0;
+            let trimestre = 1;
+            for (const t in trimestreCount) {
+                if (trimestreCount[t] > maxCount) {
+                    maxCount = trimestreCount[t];
+                    trimestre = parseInt(t);
+                }
+            }
+
+            return trimestre;
         }
 
         // Función para crear el HTML de una semana
         function createWeekHTML(semana) {
-            const domingoNumber = extractNumber(semana.predicacionDomingo);
-            const domingoTitle = extractTitle(semana.predicacionDomingo);
-            const miercolesNumber = extractNumber(semana.predicacionMiercoles);
-            const miercolesTitle = extractTitle(semana.predicacionMiercoles);
+            const match = semana.predicacionDomingo.match(/^([A-Za-z]?\d+)/);
+            const domingoNumber =  match ? match[1] : null;//extractNumber(semana.predicacionDomingo);
+            const domingoTitle = semana.predicacionDomingo
+                        .replace(/^([A-Za-z]?\d+)\s*/, '')
+                        .trim();//extractTitle(semana.predicacionDomingo);
+            const match1 = semana.predicacionMiercoles.match(/^([A-Za-z]?\d+)/);
+            
+            const miercolesNumber = match1 ? match1[1] : null//extractNumber(semana.predicacionMiercoles);
+            const miercolesTitle = semana.predicacionMiercoles
+                        .replace(/^([A-Za-z]?\d+)\s*/, '')
+                        .trim();//extractTitle(semana.predicacionMiercoles);
             
             return `
                 <div class="week">
@@ -402,10 +443,13 @@
             `;
         }
 
-        // Función para inicializar el calendario con los datos cargados
+        // Función para inicializar el calendario con los datos cargados (versión corregida)
         function inicializarCalendario(predicaciones) {
             // Ocultar mensaje de carga
             document.getElementById('loading').style.display = 'none';
+            
+            // Obtener el año actual
+            const currentYear = new Date().getFullYear();
             
             // Organizar las semanas por trimestre
             const trimestres = {
@@ -416,11 +460,21 @@
             };
 
             predicaciones.forEach(semana => {
-                const trimestre = getTrimestre(semana.fechaDomingo) || 
-                                getTrimestre(semana.fechaMiercoles) || 
-                                getTrimestre(semana.fechaCulto);
-                if (trimestre > 0) {
-                    trimestres[trimestre].push(semana);
+                // Verificar si alguna de las fechas pertenece al año actual
+                const fechaDomingo = semana.fechaDomingo ? new Date(semana.fechaDomingo.includes('T') ? semana.fechaDomingo : semana.fechaDomingo + 'T00:00:00') : null;
+                const fechaMiercoles = semana.fechaMiercoles ? new Date(semana.fechaMiercoles.includes('T') ? semana.fechaMiercoles : semana.fechaMiercoles + 'T00:00:00') : null;
+                const fechaCulto = semana.fechaCulto ? new Date(semana.fechaCulto.includes('T') ? semana.fechaCulto : semana.fechaCulto + 'T00:00:00') : null;
+                
+                const isCurrentYear = 
+                    (fechaDomingo && fechaDomingo.getFullYear() === currentYear) ||
+                    (fechaMiercoles && fechaMiercoles.getFullYear() === currentYear) ||
+                    (fechaCulto && fechaCulto.getFullYear() === currentYear);
+                
+                if (isCurrentYear) {
+                    const trimestre = getTrimestre(semana);
+                    if (trimestre > 0) {
+                        trimestres[trimestre].push(semana);
+                    }
                 }
             });
 
@@ -429,6 +483,13 @@
                 const container = document.getElementById(`trimestre-${trimestre}`);
                 // Limpiar el contenedor primero, manteniendo el título
                 container.innerHTML = `<h2 class="trimestre-title">${container.querySelector('.trimestre-title').textContent}</h2>`;
+                
+                // Ordenar las semanas por fecha (más antigua primero)
+                trimestres[trimestre].sort((a, b) => {
+                    const fechaA = a.fechaDomingo || a.fechaMiercoles || a.fechaCulto;
+                    const fechaB = b.fechaDomingo || b.fechaMiercoles || b.fechaCulto;
+                    return new Date(fechaA) - new Date(fechaB);
+                });
                 
                 trimestres[trimestre].forEach(semana => {
                     container.insertAdjacentHTML('beforeend', createWeekHTML(semana));
