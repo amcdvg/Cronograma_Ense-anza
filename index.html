@@ -59,37 +59,51 @@
             gap: 15px;
         }
         
-        .select-container {
-            position: relative;
-            min-width: 250px;
+        .trimestre-buttons {
+            display: flex;
+            gap: 8px;
+            align-items: center;
         }
         
-        .select-container i {
-            position: absolute;
-            left: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--primary-color);
-            z-index: 1;
-        }
-        
-        select {
-            width: 100%;
-            padding: 12px 15px 12px 40px;
-            border: 2px solid #ddd;
+        .trimestre-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
             border-radius: 8px;
-            font-size: 1rem;
             background-color: white;
-            appearance: none;
             cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            min-width: 80px;
         }
         
-        select:focus {
-            outline: none;
+        .trimestre-btn:hover {
+            background-color: #f0f7ff;
             border-color: var(--accent-color);
-            box-shadow: 0 0 0 3px rgba(79, 195, 247, 0.2);
+        }
+        
+        .trimestre-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .trimestre-btn .period {
+            font-size: 0.7rem;
+            color: inherit;
+        }
+        
+        .trimestre-btn .name {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: inherit;
+        }
+        
+        .trimestre-btn.active .period,
+        .trimestre-btn.active .name {
+            color: white;
         }
         
         .calendar {
@@ -255,6 +269,11 @@
             .header h1 {
                 font-size: 1.8rem;
             }
+            
+            .trimestre-buttons {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
         }
     </style>
 </head>
@@ -266,15 +285,27 @@
         </div>
         
         <div class="controls">
-            <div class="select-container">
-                <i class="fas fa-calendar-week"></i>
-                <select id="trimestre-select">
-                    <option value="">Seleccione un trimestre</option>
-                    <option value="1" selected>Primer Trimestre (Enero - Marzo)</option>
-                    <option value="2">Segundo Trimestre (Abril - Junio)</option>
-                    <option value="3">Tercer Trimestre (Julio - Septiembre)</option>
-                    <option value="4">Cuarto Trimestre (Octubre - Diciembre)</option>
-                </select>
+            <div class="trimestre-buttons">
+                <div class="trimestre-btn active" data-trimestre="1">
+                    
+                    <span class="name">Primer Trimestre</span>
+                    <span class="period">Enero - Marzo</span>
+                </div>
+                <div class="trimestre-btn" data-trimestre="2">
+                   
+                    <span class="name">Segundo Trimestre</span>
+                    <span class="period">Abril - Junio</span>
+                </div>
+                <div class="trimestre-btn" data-trimestre="3">
+                    
+                    <span class="name">Tercer Trimestre</span>
+                    <span class="period">Julio - Septiembre</span>
+                </div>
+                <div class="trimestre-btn" data-trimestre="4">
+                   
+                    <span class="name">Cuarto Trimestre</span>
+                    <span class="period">Octubre - Diciembre</span>
+                </div>
             </div>
         </div>
         
@@ -498,7 +529,6 @@
 
             // Mostrar el primer trimestre por defecto
             document.getElementById('trimestre-1').classList.add('active');
-            document.getElementById('trimestre-select').value = '1';
         }
 
         // Función para mostrar un mensaje de error
@@ -535,19 +565,27 @@
         document.addEventListener('DOMContentLoaded', function() {
             cargarPredicaciones();
             
-            // Configurar el evento del selector de trimestre
-            document.getElementById('trimestre-select').addEventListener('change', function() {
-                const selectedTrimestre = this.value;
-                
-                // Ocultar todos los trimestres
-                document.querySelectorAll('.calendar').forEach(calendar => {
-                    calendar.classList.remove('active');
-                });
-                
-                // Mostrar el trimestre seleccionado
-                if (selectedTrimestre) {
+            // Configurar el evento de los botones de trimestre
+            document.querySelectorAll('.trimestre-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const selectedTrimestre = this.getAttribute('data-trimestre');
+                    
+                    // Quitar la clase active de todos los botones
+                    document.querySelectorAll('.trimestre-btn').forEach(b => {
+                        b.classList.remove('active');
+                    });
+                    
+                    // Añadir la clase active al botón seleccionado
+                    this.classList.add('active');
+                    
+                    // Ocultar todos los trimestres
+                    document.querySelectorAll('.calendar').forEach(calendar => {
+                        calendar.classList.remove('active');
+                    });
+                    
+                    // Mostrar el trimestre seleccionado
                     document.getElementById(`trimestre-${selectedTrimestre}`).classList.add('active');
-                }
+                });
             });
         });
     </script>
