@@ -286,23 +286,19 @@
         
         <div class="controls">
             <div class="trimestre-buttons">
-                <div class="trimestre-btn active" data-trimestre="1">
-                    
+                <div class="trimestre-btn" data-trimestre="1">
                     <span class="name">Primer Trimestre</span>
                     <span class="period">Enero - Marzo</span>
                 </div>
                 <div class="trimestre-btn" data-trimestre="2">
-                   
                     <span class="name">Segundo Trimestre</span>
                     <span class="period">Abril - Junio</span>
                 </div>
                 <div class="trimestre-btn" data-trimestre="3">
-                    
                     <span class="name">Tercer Trimestre</span>
                     <span class="period">Julio - Septiembre</span>
                 </div>
                 <div class="trimestre-btn" data-trimestre="4">
-                   
                     <span class="name">Cuarto Trimestre</span>
                     <span class="period">Octubre - Diciembre</span>
                 </div>
@@ -342,6 +338,17 @@
         // URL de tu Apps Script Web App (reemplázala con la tuya)
         const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzY7XJs6D5Vvnq0unRGjbw40VT-UblX5WCMzckQpWocpd1QQ_cDETeCNMvutcOadt8U/exec';
         
+        // Función para obtener el trimestre actual basado en la fecha
+        function getCurrentTrimestre() {
+            const now = new Date();
+            const month = now.getMonth() + 1; // Los meses van de 0 a 11
+            
+            if (month >= 1 && month <= 3) return 1;
+            if (month >= 4 && month <= 6) return 2;
+            if (month >= 7 && month <= 9) return 3;
+            return 4; // Octubre - Diciembre
+        }
+
         // Función para formatear la fecha
         function formatDate(dateString) {
             if (!dateString) return "";
@@ -413,16 +420,16 @@
         // Función para crear el HTML de una semana
         function createWeekHTML(semana) {
             const match = semana.predicacionDomingo.match(/^([A-Za-z]?\d+)/);
-            const domingoNumber =  match ? match[1] : null;//extractNumber(semana.predicacionDomingo);
+            const domingoNumber =  match ? match[1] : null;
             const domingoTitle = semana.predicacionDomingo
                         .replace(/^([A-Za-z]?\d+)\s*/, '')
-                        .trim();//extractTitle(semana.predicacionDomingo);
+                        .trim();
             const match1 = semana.predicacionMiercoles.match(/^([A-Za-z]?\d+)/);
             
-            const miercolesNumber = match1 ? match1[1] : null//extractNumber(semana.predicacionMiercoles);
+            const miercolesNumber = match1 ? match1[1] : null;
             const miercolesTitle = semana.predicacionMiercoles
                         .replace(/^([A-Za-z]?\d+)\s*/, '')
-                        .trim();//extractTitle(semana.predicacionMiercoles);
+                        .trim();
             
             return `
                 <div class="week">
@@ -474,7 +481,7 @@
             `;
         }
 
-        // Función para inicializar el calendario con los datos cargados (versión corregida)
+        // Función para inicializar el calendario con los datos cargados
         function inicializarCalendario(predicaciones) {
             // Ocultar mensaje de carga
             document.getElementById('loading').style.display = 'none';
@@ -527,8 +534,24 @@
                 });
             }
 
-            // Mostrar el primer trimestre por defecto
-            document.getElementById('trimestre-1').classList.add('active');
+            // Obtener el trimestre actual
+            const currentTrimestre = getCurrentTrimestre();
+            
+            // Quitar la clase active de todos los botones
+            document.querySelectorAll('.trimestre-btn').forEach(b => {
+                b.classList.remove('active');
+            });
+            
+            // Añadir la clase active al botón del trimestre actual
+            document.querySelector(`.trimestre-btn[data-trimestre="${currentTrimestre}"]`).classList.add('active');
+            
+            // Ocultar todos los trimestres
+            document.querySelectorAll('.calendar').forEach(calendar => {
+                calendar.classList.remove('active');
+            });
+            
+            // Mostrar el trimestre actual
+            document.getElementById(`trimestre-${currentTrimestre}`).classList.add('active');
         }
 
         // Función para mostrar un mensaje de error
