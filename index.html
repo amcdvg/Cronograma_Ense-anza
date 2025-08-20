@@ -342,6 +342,56 @@
             z-index: 1001;
             font-weight: 500;
         }
+
+        /* Modal de instalación exitosa */
+        .install-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .install-modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 400px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            animation: modalFadeIn 0.3s;
+        }
+        
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .install-modal h2 {
+            color: var(--primary-color);
+            margin-top: 0;
+        }
+        
+        .install-modal p {
+            margin: 15px 0;
+            font-size: 1.1rem;
+        }
+        
+        .install-modal-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-top: 15px;
+        }
         
         @media (max-width: 768px) {
             .week {
@@ -376,6 +426,11 @@
             
             #pwa-install-banner p {
                 font-size: 0.9rem;
+            }
+            
+            .install-modal-content {
+                margin: 20px;
+                padding: 20px;
             }
         }
     </style>
@@ -451,6 +506,16 @@
         <button id="pwa-install-reject">Ahora no</button>
     </div-->
 
+    <!-- Modal de instalación exitosa -->
+    <div class="install-modal" id="install-success-modal">
+        <div class="install-modal-content">
+            <i class="fas fa-check-circle" style="font-size: 48px; color: var(--success-color);"></i>
+            <h2>¡Instalación Exitosa!</h2>
+            <p>La aplicación se ha instalado correctamente en tu dispositivo.</p>
+            <button class="install-modal-btn" id="install-modal-ok">Aceptar</button>
+        </div>
+    </div>
+
     <script>
         // ============================
         // MEJORAS PARA PWA (COMIENZO)
@@ -475,6 +540,8 @@
         const installAccept = document.getElementById('pwa-install-accept');
         const installReject = document.getElementById('pwa-install-reject');
         const offlineIndicator = document.getElementById('offline-indicator');
+        const installModal = document.getElementById('install-success-modal');
+        const installModalOk = document.getElementById('install-modal-ok');
         
         // Detectar cambios en la conectividad
         window.addEventListener('online', () => {
@@ -537,6 +604,21 @@
             // Limpiar el prompt guardado
             deferredPrompt = null;
             console.log('PWA was installed');
+            
+            // Mostrar modal de instalación exitosa
+            installModal.style.display = 'flex';
+        });
+        
+        // Cerrar modal al hacer clic en el botón
+        installModalOk.addEventListener('click', () => {
+            installModal.style.display = 'none';
+        });
+        
+        // Cerrar modal al hacer clic fuera del contenido
+        installModal.addEventListener('click', (e) => {
+            if (e.target === installModal) {
+                installModal.style.display = 'none';
+            }
         });
         // ==========================
         // MEJORAS PARA PWA (FIN)
