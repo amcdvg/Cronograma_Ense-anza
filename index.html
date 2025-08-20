@@ -289,45 +289,6 @@
             transform: scale(1.1);
         }
         
-        /* Banner de instalación */
-        #pwa-install-banner {
-            display: none;
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: #f8f9fa;
-            padding: 15px;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-            z-index: 1000;
-            text-align: center;
-            border-top: 3px solid var(--primary-color);
-        }
-        
-        #pwa-install-banner p {
-            margin: 0 0 10px 0;
-            font-size: 1rem;
-        }
-        
-        #pwa-install-accept {
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            margin-right: 10px;
-            cursor: pointer;
-        }
-        
-        #pwa-install-reject {
-            background: #6c757d;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        
         /* Indicador de estado offline */
         .offline-indicator {
             display: none;
@@ -420,14 +381,6 @@
                 font-size: 20px;
             }
             
-            #pwa-install-banner {
-                padding: 12px;
-            }
-            
-            #pwa-install-banner p {
-                font-size: 0.9rem;
-            }
-            
             .install-modal-content {
                 margin: 20px;
                 padding: 20px;
@@ -499,12 +452,6 @@
     <button id="pwa-install-btn" class="pwa-install-btn" title="Instalar aplicación">
         <i class="fas fa-download"></i>
     </button>
-    
-    <!--div id="pwa-install-banner">
-        <p>¿Deseas instalar la aplicación para un acceso más rápido?</p>
-        <button id="pwa-install-accept">Instalar</button>
-        <button id="pwa-install-reject">Ahora no</button>
-    </div-->
 
     <!-- Modal de instalación exitosa -->
     <div class="install-modal" id="install-success-modal">
@@ -536,9 +483,6 @@
         // Detectar si la PWA se puede instalar
         let deferredPrompt;
         const installButton = document.getElementById('pwa-install-btn');
-        const installBanner = document.getElementById('pwa-install-banner');
-        const installAccept = document.getElementById('pwa-install-accept');
-        const installReject = document.getElementById('pwa-install-reject');
         const offlineIndicator = document.getElementById('offline-indicator');
         const installModal = document.getElementById('install-success-modal');
         const installModalOk = document.getElementById('install-modal-ok');
@@ -562,17 +506,9 @@
             // Mostrar el botón de instalación
             installButton.style.display = 'block';
             
-            // Mostrar banner después de un tiempo si no se ha rechazado antes
-            if (!localStorage.getItem('pwaBannerRejected')) {
-                setTimeout(() => {
-                    installBanner.style.display = 'block';
-                }, 5000);
-            }
-            
             installButton.addEventListener('click', async () => {
                 // Ocultar el botón después de hacer clic
                 installButton.style.display = 'none';
-                installBanner.style.display = 'none';
                 // Mostrar el prompt de instalación
                 deferredPrompt.prompt();
                 // Esperar a que el usuario responda al prompt
@@ -581,26 +517,11 @@
                 // Ya no necesitamos el prompt, lo limpiamos
                 deferredPrompt = null;
             });
-            
-            installAccept.addEventListener('click', async () => {
-                installBanner.style.display = 'none';
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                console.log(`User response: ${outcome}`);
-                deferredPrompt = null;
-            });
-
-            installReject.addEventListener('click', () => {
-                installBanner.style.display = 'none';
-                // Guardar en localStorage para no mostrar de nuevo
-                localStorage.setItem('pwaBannerRejected', 'true');
-            });
         });
 
         window.addEventListener('appinstalled', () => {
             // Ocultar el botón de instalación después de instalar
             installButton.style.display = 'none';
-            installBanner.style.display = 'none';
             // Limpiar el prompt guardado
             deferredPrompt = null;
             console.log('PWA was installed');
@@ -742,7 +663,7 @@
                     <div class="day sabado">
                         <div class="day-header">
                             <i class="fas fa-users"></i>
-                            <h3 class="day-title">Culto de Estudio Bíblico</h3>
+                            <h3 class="day-title">Culto de Estudio Bíblico y Aseo</h3>
                         </div>
                         <div class="date">${formatDate(semana.fechaCulto)}</div>
                         <div class="predicacion ${!semana.horarioCulto ? 'empty' : ''}">
