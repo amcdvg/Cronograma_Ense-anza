@@ -8,11 +8,11 @@
   "theme_color": "#4a6fa5",
   "orientation": "portrait",
   "icons": [
-  {
+    {
       "src": "calendar.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any"
-  }
-]
+      "purpose": "any maskable"
+    }
+  ]
 }

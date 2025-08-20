@@ -5,19 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calendario de Predicaciones</title>
     
-    <!-- ============================ -->
-    <!-- AÑADIDOS PARA PWA (COMIENZO) -->
-    <!-- ============================ -->
+    <!-- Meta tags PWA -->
     <meta name="theme-color" content="#4a6fa5">
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="/calendar.ico" type="image/x-icon">
-    <link rel="apple-touch-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/calendar.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Predicaciones">
-    <!-- ========================== -->
-    <!-- AÑADIDOS PARA PWA (FIN) -->
-    <!-- ========================== -->
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -294,6 +289,60 @@
             transform: scale(1.1);
         }
         
+        /* Banner de instalación */
+        #pwa-install-banner {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #f8f9fa;
+            padding: 15px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            text-align: center;
+            border-top: 3px solid var(--primary-color);
+        }
+        
+        #pwa-install-banner p {
+            margin: 0 0 10px 0;
+            font-size: 1rem;
+        }
+        
+        #pwa-install-accept {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        
+        #pwa-install-reject {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        /* Indicador de estado offline */
+        .offline-indicator {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: var(--warning-color);
+            color: #000;
+            text-align: center;
+            padding: 10px;
+            z-index: 1001;
+            font-weight: 500;
+        }
+        
         @media (max-width: 768px) {
             .week {
                 flex-direction: column;
@@ -320,10 +369,22 @@
                 height: 50px;
                 font-size: 20px;
             }
+            
+            #pwa-install-banner {
+                padding: 12px;
+            }
+            
+            #pwa-install-banner p {
+                font-size: 0.9rem;
+            }
         }
     </style>
 </head>
 <body>
+    <div class="offline-indicator" id="offline-indicator">
+        <i class="fas fa-wifi"></i> Estás trabajando sin conexión
+    </div>
+    
     <div class="container">
         <div class="header">
             <h1><i class="fas fa-calendar-alt"></i> Programación de Enseñanzas</h1>
@@ -383,10 +444,16 @@
     <button id="pwa-install-btn" class="pwa-install-btn" title="Instalar aplicación">
         <i class="fas fa-download"></i>
     </button>
+    
+    <div id="pwa-install-banner">
+        <p>¿Deseas instalar la aplicación para un acceso más rápido?</p>
+        <button id="pwa-install-accept">Instalar</button>
+        <button id="pwa-install-reject">Ahora no</button>
+    </div>
 
     <script>
         // ============================
-        // AÑADIDOS PARA PWA (COMIENZO)
+        // MEJORAS PARA PWA (COMIENZO)
         // ============================
         // Registrar Service Worker
         if ('serviceWorker' in navigator) {
@@ -404,7 +471,22 @@
         // Detectar si la PWA se puede instalar
         let deferredPrompt;
         const installButton = document.getElementById('pwa-install-btn');
+        const installBanner = document.getElementById('pwa-install-banner');
+        const installAccept = document.getElementById('pwa-install-accept');
+        const installReject = document.getElementById('pwa-install-reject');
+        const offlineIndicator = document.getElementById('offline-indicator');
         
+        // Detectar cambios en la conectividad
+        window.addEventListener('online', () => {
+            offlineIndicator.style.display = 'none';
+            console.log('Conectado a internet');
+        });
+        
+        window.addEventListener('offline', () => {
+            offlineIndicator.style.display = 'block';
+            console.log('Sin conexión a internet');
+        });
+
         window.addEventListener('beforeinstallprompt', (e) => {
             // Prevenir que el navegador muestre el prompt automáticamente
             e.preventDefault();
@@ -413,9 +495,17 @@
             // Mostrar el botón de instalación
             installButton.style.display = 'block';
             
+            // Mostrar banner después de un tiempo si no se ha rechazado antes
+            if (!localStorage.getItem('pwaBannerRejected')) {
+                setTimeout(() => {
+                    installBanner.style.display = 'block';
+                }, 5000);
+            }
+            
             installButton.addEventListener('click', async () => {
                 // Ocultar el botón después de hacer clic
                 installButton.style.display = 'none';
+                installBanner.style.display = 'none';
                 // Mostrar el prompt de instalación
                 deferredPrompt.prompt();
                 // Esperar a que el usuario responda al prompt
@@ -424,17 +514,32 @@
                 // Ya no necesitamos el prompt, lo limpiamos
                 deferredPrompt = null;
             });
+            
+            installAccept.addEventListener('click', async () => {
+                installBanner.style.display = 'none';
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`User response: ${outcome}`);
+                deferredPrompt = null;
+            });
+
+            installReject.addEventListener('click', () => {
+                installBanner.style.display = 'none';
+                // Guardar en localStorage para no mostrar de nuevo
+                localStorage.setItem('pwaBannerRejected', 'true');
+            });
         });
 
         window.addEventListener('appinstalled', () => {
             // Ocultar el botón de instalación después de instalar
             installButton.style.display = 'none';
+            installBanner.style.display = 'none';
             // Limpiar el prompt guardado
             deferredPrompt = null;
             console.log('PWA was installed');
         });
         // ==========================
-        // AÑADIDOS PARA PWA (FIN)
+        // MEJORAS PARA PWA (FIN)
         // ==========================
 
         // URL de tu Apps Script Web App (reemplázala con la tuya)
@@ -458,19 +563,6 @@
             const date = new Date(dateString.includes('T') ? dateString : dateString + 'T00:00:00');
             const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
             return date.toLocaleDateString('es-ES', options);
-        }
-
-        // Función para extraer el número de predicación
-        function extractNumber(text) {
-            if (!text) return "";
-            const match = text.match(/^\d+/);
-            return match ? match[0] : "";
-        }
-
-        // Función para extraer el título de predicación
-        function extractTitle(text) {
-            if (!text) return "";
-            return text.replace(/^\d+\s*/, "");
         }
 
         // Función para determinar el trimestre (versión mejorada)
@@ -521,17 +613,15 @@
 
         // Función para crear el HTML de una semana
         function createWeekHTML(semana) {
-            const match = semana.predicacionDomingo.match(/^([A-Za-z]?\d+)/);
+            const match = semana.predicacionDomingo && semana.predicacionDomingo.match(/^([A-Za-z]?\d+)/);
             const domingoNumber =  match ? match[1] : null;
-            const domingoTitle = semana.predicacionDomingo
-                        .replace(/^([A-Za-z]?\d+)\s*/, '')
-                        .trim();
-            const match1 = semana.predicacionMiercoles.match(/^([A-Za-z]?\d+)/);
+            const domingoTitle = semana.predicacionDomingo ?
+                        semana.predicacionDomingo.replace(/^([A-Za-z]?\d+)\s*/, '').trim() : '';
             
+            const match1 = semana.predicacionMiercoles && semana.predicacionMiercoles.match(/^([A-Za-z]?\d+)/);
             const miercolesNumber = match1 ? match1[1] : null;
-            const miercolesTitle = semana.predicacionMiercoles
-                        .replace(/^([A-Za-z]?\d+)\s*/, '')
-                        .trim();
+            const miercolesTitle = semana.predicacionMiercoles ?
+                        semana.predicacionMiercoles.replace(/^([A-Za-z]?\d+)\s*/, '').trim() : '';
             
             return `
                 <div class="week">
@@ -712,6 +802,11 @@
                     document.getElementById(`trimestre-${selectedTrimestre}`).classList.add('active');
                 });
             });
+            
+            // Verificar estado de conexión al cargar
+            if (!navigator.onLine) {
+                offlineIndicator.style.display = 'block';
+            }
         });
     </script>
 </body>
