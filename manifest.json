@@ -8,10 +8,11 @@
   "theme_color": "#4a6fa5",
   "orientation": "portrait",
   "icons": [
-    {
-      "src": "calendar.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
-    }
-  ]
+  {
+      "src": "https://cronogramaenseanzas.netlify.app/calendar.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+  }
+]
 }
