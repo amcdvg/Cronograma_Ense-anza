@@ -2,7 +2,8 @@ const CACHE_NAME = 'predicaciones-cache-v1';
 const urlsToCache = [
   '/',
   '/index.html',
-  // Añade aquí otros recursos estáticos que quieras cachear
+  '/manifest.json',
+  '/favicon.ico'
 ];
 
 // Instalación del Service Worker

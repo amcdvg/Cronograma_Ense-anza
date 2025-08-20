@@ -1,0 +1,17 @@
+{
+  "name": "Calendario de Enseñanzas",
+  "short_name": "Enseñanzas",
+  "description": "Programación semanal de enseñanzas y cultos de Estudio Bíblico",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f7fa",
+  "theme_color": "#4a6fa5",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "calendar.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}

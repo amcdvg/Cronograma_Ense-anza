@@ -4,6 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calendario de Predicaciones</title>
+    
+    <!-- ============================ -->
+    <!-- AÑADIDOS PARA PWA (COMIENZO) -->
+    <!-- ============================ -->
+    <meta name="theme-color" content="#4a6fa5">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="apple-touch-icon" href="/favicon.ico">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Predicaciones">
+    <!-- ========================== -->
+    <!-- AÑADIDOS PARA PWA (FIN) -->
+    <!-- ========================== -->
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -256,6 +271,29 @@
             max-width: 600px;
         }
         
+        .pwa-install-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            display: none;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+        
+        .pwa-install-btn:hover {
+            background-color: var(--secondary-color);
+            transform: scale(1.1);
+        }
+        
         @media (max-width: 768px) {
             .week {
                 flex-direction: column;
@@ -273,6 +311,14 @@
             .trimestre-buttons {
                 flex-wrap: wrap;
                 justify-content: center;
+            }
+            
+            .pwa-install-btn {
+                bottom: 70px;
+                right: 15px;
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
             }
         }
     </style>
@@ -334,7 +380,63 @@
         </div>
     </div>
 
+    <button id="pwa-install-btn" class="pwa-install-btn" title="Instalar aplicación">
+        <i class="fas fa-download"></i>
+    </button>
+
     <script>
+        // ============================
+        // AÑADIDOS PARA PWA (COMIENZO)
+        // ============================
+        // Registrar Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js')
+                .then(function(registration) {
+                    console.log('ServiceWorker registrado con éxito: ', registration.scope);
+                })
+                .catch(function(error) {
+                    console.log('Error al registrar ServiceWorker: ', error);
+                });
+            });
+        }
+
+        // Detectar si la PWA se puede instalar
+        let deferredPrompt;
+        const installButton = document.getElementById('pwa-install-btn');
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Prevenir que el navegador muestre el prompt automáticamente
+            e.preventDefault();
+            // Guardar el evento para poder activarlo después
+            deferredPrompt = e;
+            // Mostrar el botón de instalación
+            installButton.style.display = 'block';
+            
+            installButton.addEventListener('click', async () => {
+                // Ocultar el botón después de hacer clic
+                installButton.style.display = 'none';
+                // Mostrar el prompt de instalación
+                deferredPrompt.prompt();
+                // Esperar a que el usuario responda al prompt
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`User response to the install prompt: ${outcome}`);
+                // Ya no necesitamos el prompt, lo limpiamos
+                deferredPrompt = null;
+            });
+        });
+
+        window.addEventListener('appinstalled', () => {
+            // Ocultar el botón de instalación después de instalar
+            installButton.style.display = 'none';
+            // Limpiar el prompt guardado
+            deferredPrompt = null;
+            console.log('PWA was installed');
+        });
+        // ==========================
+        // AÑADIDOS PARA PWA (FIN)
+        // ==========================
+
         // URL de tu Apps Script Web App (reemplázala con la tuya)
         const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzY7XJs6D5Vvnq0unRGjbw40VT-UblX5WCMzckQpWocpd1QQ_cDETeCNMvutcOadt8U/exec';
         
