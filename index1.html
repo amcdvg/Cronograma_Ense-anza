@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendario de Predicaciones</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4a6fa5;
+            --secondary-color: #166088;
+            --accent-color: #4fc3f7;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 2.2rem;
+        }
+        
+        .header p {
+            margin: 10px 0 0;
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .trimestre-buttons {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .trimestre-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            min-width: 80px;
+        }
+        
+        .trimestre-btn:hover {
+            background-color: #f0f7ff;
+            border-color: var(--accent-color);
+        }
+        
+        .trimestre-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .trimestre-btn .period {
+            font-size: 0.7rem;
+            color: inherit;
+        }
+        
+        .trimestre-btn .name {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: inherit;
+        }
+        
+        .trimestre-btn.active .period,
+        .trimestre-btn.active .name {
+            color: white;
+        }
+        
+        .calendar {
+            display: none;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+        
+        .calendar.active {
+            display: block;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .week {
+            display: flex;
+            border-bottom: 1px solid #eee;
+            transition: all 0.3s;
+        }
+        
+        .week:last-child {
+            border-bottom: none;
+        }
+        
+        .week:hover {
+            background-color: #f8fafc;
+        }
+        
+        .day {
+            flex: 1;
+            padding: 15px;
+            position: relative;
+        }
+        
+        .day:not(:last-child) {
+            border-right: 1px solid #eee;
+        }
+        
+        .day-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            color: var(--secondary-color);
+        }
+        
+        .day-header i {
+            margin-right: 8px;
+            font-size: 1.2rem;
+        }
+        
+        .day-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin: 0;
+        }
+        
+        .date {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .predicacion {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f0f7ff;
+            border-radius: 6px;
+            border-left: 4px solid var(--accent-color);
+        }
+        
+        .predicacion.empty {
+            background-color: #f9f9f9;
+            border-left: 4px solid #ddd;
+            color: #999;
+            font-style: italic;
+        }
+        
+        .predicacion-title {
+            font-weight: 600;
+            margin: 0 0 5px 0;
+            color: var(--dark-color);
+        }
+        
+        .predicacion-number {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-right: 5px;
+        }
+        
+        .sabado .predicacion {
+            background-color: #e8f5e9;
+            border-left: 4px solid var(--success-color);
+        }
+        
+        .sabado .day-header i {
+            color: var(--success-color);
+        }
+        
+        .domingo .day-header i {
+            color: #d32f2f;
+        }
+        
+        .domingo .predicacion {
+            background-color: #ffebee;
+            border-left: 4px solid #d32f2f;
+        }
+        
+        .miercoles .day-header i {
+            color: var(--warning-color);
+        }
+        
+        .miercoles .predicacion {
+            background-color: #fff8e1;
+            border-left: 4px solid var(--warning-color);
+        }
+        
+        .trimestre-title {
+            text-align: center;
+            margin: 20px 0;
+            color: var(--secondary-color);
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-size: 1.2rem;
+            color: var(--primary-color);
+        }
+        
+        .error-message {
+            text-align: center;
+            padding: 20px;
+            color: var(--danger-color);
+            background-color: #ffebee;
+            border-radius: 8px;
+            margin: 20px auto;
+            max-width: 600px;
+        }
+        
+        @media (max-width: 768px) {
+            .week {
+                flex-direction: column;
+            }
+            
+            .day:not(:last-child) {
+                border-right: none;
+                border-bottom: 1px solid #eee;
+            }
+            
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .trimestre-buttons {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-calendar-alt"></i> Programación de Enseñanzas</h1>
+            <p>Programación semanal de enseñanzas y cultos de Estudio Bíblico del día sábado</p>
+        </div>
+        
+        <div class="controls">
+            <div class="trimestre-buttons">
+                <div class="trimestre-btn active" data-trimestre="1">
+                    
+                    <span class="name">Primer Trimestre</span>
+                    <span class="period">Enero - Marzo</span>
+                </div>
+                <div class="trimestre-btn" data-trimestre="2">
+                   
+                    <span class="name">Segundo Trimestre</span>
+                    <span class="period">Abril - Junio</span>
+                </div>
+                <div class="trimestre-btn" data-trimestre="3">
+                    
+                    <span class="name">Tercer Trimestre</span>
+                    <span class="period">Julio - Septiembre</span>
+                </div>
+                <div class="trimestre-btn" data-trimestre="4">
+                   
+                    <span class="name">Cuarto Trimestre</span>
+                    <span class="period">Octubre - Diciembre</span>
+                </div>
+            </div>
+        </div>
+        
+        <div id="loading" class="loading">
+            <i class="fas fa-spinner fa-spin"></i> Cargando datos...
+        </div>
+        
+        <div id="error-container" class="error-message" style="display: none;">
+            <i class="fas fa-exclamation-triangle"></i> <span id="error-text"></span>
+        </div>
+        
+        <div id="trimestre-1" class="calendar">
+            <h2 class="trimestre-title">Primer Trimestre (Enero - Marzo)</h2>
+            <!-- Las semanas se insertarán aquí mediante JavaScript -->
+        </div>
+        
+        <div id="trimestre-2" class="calendar">
+            <h2 class="trimestre-title">Segundo Trimestre (Abril - Junio)</h2>
+            <!-- Las semanas se insertarán aquí mediante JavaScript -->
+        </div>
+        
+        <div id="trimestre-3" class="calendar">
+            <h2 class="trimestre-title">Tercer Trimestre (Julio - Septiembre)</h2>
+            <!-- Las semanas se insertarán aquí mediante JavaScript -->
+        </div>
+        
+        <div id="trimestre-4" class="calendar">
+            <h2 class="trimestre-title">Cuarto Trimestre (Octubre - Diciembre)</h2>
+            <!-- Las semanas se insertarán aquí mediante JavaScript -->
+        </div>
+    </div>
+
+    <script>
+        // URL de tu Apps Script Web App (reemplázala con la tuya)
+        const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzY7XJs6D5Vvnq0unRGjbw40VT-UblX5WCMzckQpWocpd1QQ_cDETeCNMvutcOadt8U/exec';
+        
+        // Función para formatear la fecha
+        function formatDate(dateString) {
+            if (!dateString) return "";
+            // Añadir 'T00:00:00' para asegurar que no hay cambio de día por huso horario
+            const date = new Date(dateString.includes('T') ? dateString : dateString + 'T00:00:00');
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            return date.toLocaleDateString('es-ES', options);
+        }
+
+        // Función para extraer el número de predicación
+        function extractNumber(text) {
+            if (!text) return "";
+            const match = text.match(/^\d+/);
+            return match ? match[0] : "";
+        }
+
+        // Función para extraer el título de predicación
+        function extractTitle(text) {
+            if (!text) return "";
+            return text.replace(/^\d+\s*/, "");
+        }
+
+        // Función para determinar el trimestre (versión mejorada)
+        function getTrimestre(semana) {
+            // Primero verificar si hay fecha de culto (sábado) y está entre el 1-7 de enero
+            if (semana.fechaCulto) {
+                const fechaCulto = new Date(semana.fechaCulto.includes('T') ? semana.fechaCulto : semana.fechaCulto + 'T00:00:00');
+                const mesCulto = fechaCulto.getMonth() + 1;
+                const diaCulto = fechaCulto.getDate();
+                
+                if (mesCulto === 1 && diaCulto <= 7) {
+                    return 1;
+                }
+            }
+
+            // Contar cuántas fechas caen en cada trimestre
+            const trimestreCount = {1: 0, 2: 0, 3: 0, 4: 0};
+            
+            // Función auxiliar para contar trimestres
+            function contarTrimestre(dateString) {
+                if (!dateString) return;
+                const date = new Date(dateString.includes('T') ? dateString : dateString + 'T00:00:00');
+                const month = date.getMonth() + 1;
+                
+                if (month >= 1 && month <= 3) trimestreCount[1]++;
+                else if (month >= 4 && month <= 6) trimestreCount[2]++;
+                else if (month >= 7 && month <= 9) trimestreCount[3]++;
+                else trimestreCount[4]++;
+            }
+
+            // Contar trimestres para cada fecha
+            contarTrimestre(semana.fechaDomingo);
+            contarTrimestre(semana.fechaMiercoles);
+            contarTrimestre(semana.fechaCulto);
+
+            // Determinar el trimestre con más fechas
+            let maxCount = 0;
+            let trimestre = 1;
+            for (const t in trimestreCount) {
+                if (trimestreCount[t] > maxCount) {
+                    maxCount = trimestreCount[t];
+                    trimestre = parseInt(t);
+                }
+            }
+
+            return trimestre;
+        }
+
+        // Función para crear el HTML de una semana
+        function createWeekHTML(semana) {
+            const match = semana.predicacionDomingo.match(/^([A-Za-z]?\d+)/);
+            const domingoNumber =  match ? match[1] : null;//extractNumber(semana.predicacionDomingo);
+            const domingoTitle = semana.predicacionDomingo
+                        .replace(/^([A-Za-z]?\d+)\s*/, '')
+                        .trim();//extractTitle(semana.predicacionDomingo);
+            const match1 = semana.predicacionMiercoles.match(/^([A-Za-z]?\d+)/);
+            
+            const miercolesNumber = match1 ? match1[1] : null//extractNumber(semana.predicacionMiercoles);
+            const miercolesTitle = semana.predicacionMiercoles
+                        .replace(/^([A-Za-z]?\d+)\s*/, '')
+                        .trim();//extractTitle(semana.predicacionMiercoles);
+            
+            return `
+                <div class="week">
+                    <div class="day domingo">
+                        <div class="day-header">
+                            <i class="fas fa-book"></i>
+                            <h3 class="day-title">Domingo</h3>
+                        </div>
+                        <div class="date">${formatDate(semana.fechaDomingo)}</div>
+                        <div class="predicacion ${!semana.predicacionDomingo ? 'empty' : ''}">
+                            ${semana.predicacionDomingo ? 
+                                `<p class="predicacion-title">
+                                    ${domingoNumber ? `<span class="predicacion-number">${domingoNumber}</span>` : ''}
+                                    ${domingoTitle}
+                                </p>` : 
+                                '<p>No hay predicación programada</p>'}
+                        </div>
+                    </div>
+                    
+                    <div class="day miercoles">
+                        <div class="day-header">
+                            <i class="fas fa-book"></i>
+                            <h3 class="day-title">Miércoles</h3>
+                        </div>
+                        <div class="date">${formatDate(semana.fechaMiercoles)}</div>
+                        <div class="predicacion ${!semana.predicacionMiercoles ? 'empty' : ''}">
+                            ${semana.predicacionMiercoles ? 
+                                `<p class="predicacion-title">
+                                    ${miercolesNumber ? `<span class="predicacion-number">${miercolesNumber}</span>` : ''}
+                                    ${miercolesTitle}
+                                </p>` : 
+                                '<p>No hay predicación programada</p>'}
+                        </div>
+                    </div>
+                    
+                    <div class="day sabado">
+                        <div class="day-header">
+                            <i class="fas fa-users"></i>
+                            <h3 class="day-title">Culto de Estudio Bíblico</h3>
+                        </div>
+                        <div class="date">${formatDate(semana.fechaCulto)}</div>
+                        <div class="predicacion ${!semana.horarioCulto ? 'empty' : ''}">
+                            ${semana.horarioCulto ? 
+                                `<p class="predicacion-title">Horario: ${semana.horarioCulto}</p>` : 
+                                '<p>No hay culto programado</p>'}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Función para inicializar el calendario con los datos cargados (versión corregida)
+        function inicializarCalendario(predicaciones) {
+            // Ocultar mensaje de carga
+            document.getElementById('loading').style.display = 'none';
+            
+            // Obtener el año actual
+            const currentYear = new Date().getFullYear();
+            
+            // Organizar las semanas por trimestre
+            const trimestres = {
+                1: [],
+                2: [],
+                3: [],
+                4: []
+            };
+
+            predicaciones.forEach(semana => {
+                // Verificar si alguna de las fechas pertenece al año actual
+                const fechaDomingo = semana.fechaDomingo ? new Date(semana.fechaDomingo.includes('T') ? semana.fechaDomingo : semana.fechaDomingo + 'T00:00:00') : null;
+                const fechaMiercoles = semana.fechaMiercoles ? new Date(semana.fechaMiercoles.includes('T') ? semana.fechaMiercoles : semana.fechaMiercoles + 'T00:00:00') : null;
+                const fechaCulto = semana.fechaCulto ? new Date(semana.fechaCulto.includes('T') ? semana.fechaCulto : semana.fechaCulto + 'T00:00:00') : null;
+                
+                const isCurrentYear = 
+                    (fechaDomingo && fechaDomingo.getFullYear() === currentYear) ||
+                    (fechaMiercoles && fechaMiercoles.getFullYear() === currentYear) ||
+                    (fechaCulto && fechaCulto.getFullYear() === currentYear);
+                
+                if (isCurrentYear) {
+                    const trimestre = getTrimestre(semana);
+                    if (trimestre > 0) {
+                        trimestres[trimestre].push(semana);
+                    }
+                }
+            });
+
+            // Mostrar las semanas en sus respectivos trimestres
+            for (const trimestre in trimestres) {
+                const container = document.getElementById(`trimestre-${trimestre}`);
+                // Limpiar el contenedor primero, manteniendo el título
+                container.innerHTML = `<h2 class="trimestre-title">${container.querySelector('.trimestre-title').textContent}</h2>`;
+                
+                // Ordenar las semanas por fecha (más antigua primero)
+                trimestres[trimestre].sort((a, b) => {
+                    const fechaA = a.fechaDomingo || a.fechaMiercoles || a.fechaCulto;
+                    const fechaB = b.fechaDomingo || b.fechaMiercoles || b.fechaCulto;
+                    return new Date(fechaA) - new Date(fechaB);
+                });
+                
+                trimestres[trimestre].forEach(semana => {
+                    container.insertAdjacentHTML('beforeend', createWeekHTML(semana));
+                });
+            }
+
+            // Mostrar el primer trimestre por defecto
+            document.getElementById('trimestre-1').classList.add('active');
+        }
+
+        // Función para mostrar un mensaje de error
+        function mostrarError(mensaje) {
+            document.getElementById('loading').style.display = 'none';
+            const errorContainer = document.getElementById('error-container');
+            document.getElementById('error-text').textContent = mensaje;
+            errorContainer.style.display = 'block';
+        }
+
+        // Función para cargar los datos desde Google Sheets
+        async function cargarPredicaciones() {
+            try {
+                const response = await fetch(`${APP_SCRIPT_URL}?action=obtenerPredicaciones`);
+                
+                if (!response.ok) {
+                    throw new Error(`Error HTTP: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    inicializarCalendario(data.data);
+                } else {
+                    mostrarError(data.error || 'Error al cargar los datos desde el servidor');
+                }
+            } catch (error) {
+                console.error('Error al cargar predicaciones:', error);
+                mostrarError('No se pudieron cargar los datos. Por favor, intente más tarde.');
+            }
+        }
+
+        // Llamar a cargarPredicaciones cuando la página se cargue
+        document.addEventListener('DOMContentLoaded', function() {
+            cargarPredicaciones();
+            
+            // Configurar el evento de los botones de trimestre
+            document.querySelectorAll('.trimestre-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const selectedTrimestre = this.getAttribute('data-trimestre');
+                    
+                    // Quitar la clase active de todos los botones
+                    document.querySelectorAll('.trimestre-btn').forEach(b => {
+                        b.classList.remove('active');
+                    });
+                    
+                    // Añadir la clase active al botón seleccionado
+                    this.classList.add('active');
+                    
+                    // Ocultar todos los trimestres
+                    document.querySelectorAll('.calendar').forEach(calendar => {
+                        calendar.classList.remove('active');
+                    });
+                    
+                    // Mostrar el trimestre seleccionado
+                    document.getElementById(`trimestre-${selectedTrimestre}`).classList.add('active');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
