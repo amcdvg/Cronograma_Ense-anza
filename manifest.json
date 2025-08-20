@@ -9,7 +9,7 @@
   "orientation": "portrait",
   "icons": [
   {
-      "src": "https://cronogramaenseanzas.netlify.app/calendar.png",
+      "src": "calendar.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
